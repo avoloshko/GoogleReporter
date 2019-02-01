@@ -21,6 +21,7 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = "9.0"
   s.osx.deployment_target = "10.10"
   s.tvos.deployment_target = "9.0"
+  s.watchos.deployment_target = "2.0"
 
   # ――― Source Location ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
   s.source       = { :git => "https://github.com/ksmandersen/GoogleReporter.git", :tag => "#{s.version}" }

@@ -7,8 +7,10 @@
 //
 
 import Foundation
-#if os(iOS) || os(tvOS) || os(watchOS)
+#if os(iOS) || os(tvOS)
     import UIKit
+#elseif os(watchOS)
+    import WatchKit
 #elseif os(OSX)
     import AppKit
     import WebKit
@@ -170,8 +172,9 @@ public class GoogleReporter {
             print("Sending GA Report: ", url.absoluteString)
         }
 
-        let session = URLSession.shared
-        let task = session.dataTask(with: url) { _, _, error in
+        var request = URLRequest(url: url)
+        request.cachePolicy = URLRequest.CachePolicy.reloadIgnoringLocalCacheData
+        let task = URLSession.shared.dataTask(with: request) { _, _, error in
             if let errorResponse = error?.localizedDescription {
                 print("Failed to deliver GA Request. ", errorResponse)
             }
@@ -202,7 +205,7 @@ public class GoogleReporter {
     }
 
     private lazy var uniqueUserIdentifier: String = {
-        #if os(iOS) || os(tvOS) || os(watchOS)
+        #if os(iOS) || os(tvOS)
             if let identifier = UIDevice.current.identifierForVendor?.uuidString, self.usesVendorIdentifier {
                 return identifier
             }
@@ -225,7 +228,7 @@ public class GoogleReporter {
     }()
 
     public lazy var userAgent: String = {
-        #if os(iOS) || os(watchOS) || os(tvOS)
+        #if os(iOS) || os(tvOS)
             let currentDevice = UIDevice.current
             let osVersion = currentDevice.systemVersion.replacingOccurrences(of: ".", with: "_")
             let fallbackAgent = "Mozilla/5.0 (\(currentDevice.model); CPU iPhone OS \(osVersion) like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Mobile/13T534YI" // swiftlint:disable:this line_length
@@ -236,6 +239,11 @@ public class GoogleReporter {
                 let webView = UIWebView()
                 return webView.stringByEvaluatingJavaScript(from: "navigator.userAgent") ?? fallbackAgent
             #endif
+        #elseif os(watchOS)
+            let currentDevice = WKInterfaceDevice.current()
+            let osVersion = currentDevice.systemVersion.replacingOccurrences(of: ".", with: "_")
+            let fallbackAgent = "Mozilla/5.0 (\(currentDevice.model); CPU WatchOS \(osVersion) like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Mobile/13T534YI" // swiftlint:disable:this line_length
+            return fallbackAgent
         #elseif os(OSX)
             let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
             let versionString = osVersion.replacingOccurrences(of: ".", with: "_")
@@ -275,8 +283,10 @@ public class GoogleReporter {
     }()
 
     private lazy var screenResolution: String = {
-        #if os(iOS) || os(tvOS) || os(watchOS)
+        #if os(iOS) || os(tvOS)
             let size = UIScreen.main.nativeBounds.size
+        #elseif os(watchOS)
+            let size = WKInterfaceDevice.current().screenBounds.size
         #elseif os(OSX)
             let size = NSScreen.main?.frame.size ?? .zero
         #endif
